@@ -11,6 +11,7 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="CommandDotNet" Version="8.1.1" />
     <PackageVersion Include="CommandDotNet.DataAnnotations" Version="4.1.0" />
     <PackageVersion Include="CommandDotNet.NameCasing" Version="5.1.0" />
@@ -21,12 +22,7 @@
     <PackageVersion Include="dbup-sqlserver" Version="6.0.16" />
     <PackageVersion Include="DotNetEnv" Version="3.1.1" />
     <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
-    <PackageVersion Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
-    <PackageVersion Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageVersion Include="Npgsql" Version="9.0.4" />
-    <!-- Pinned transitively: the deprecated Microsoft.Azure.* packages above
-         resolve Newtonsoft.Json 10.0.3, which is CVE-2024-21907. -->
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageVersion Include="System.Text.Encoding.CodePages" Version="10.0.0" />
     <PackageVersion Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
@@ -35,6 +31,10 @@
     <PackageVersion Include="FluentAssertions" Version="8.8.0" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageVersion Include="MySql.Data" Version="9.5.0" />
+    <!-- Pinned transitively: Testcontainers resolves SSH.NET 2024.2.0, which is
+         GHSA-q939-rpr3-3284 (high). Test-only, but the .NET 10 SDK audits it
+         and TreatWarningsAsErrors turns it into a build failure. -->
+    <PackageVersion Include="SSH.NET" Version="2026.0.0" />
     <PackageVersion Include="Testcontainers" Version="4.8.1" />
     <PackageVersion Include="Testcontainers.MsSql" Version="4.8.1" />
     <PackageVersion Include="Testcontainers.MySql" Version="4.8.1" />

@@ -42,6 +42,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Azure.Identity" />
 		<PackageReference Include="CommandDotNet" />
 		<PackageReference Include="CommandDotNet.DataAnnotations" />
 		<PackageReference Include="CommandDotNet.NameCasing" />
@@ -51,8 +52,6 @@
 		<PackageReference Include="dbup-sqlserver" />
 		<PackageReference Include="DotNetEnv" />
 		<PackageReference Include="JetBrains.Annotations" />
-		<PackageReference Include="Microsoft.Azure.KeyVault" />
-		<PackageReference Include="Microsoft.Azure.Services.AppAuthentication" />
 		<PackageReference Include="Npgsql" />
 		<PackageReference Include="System.Text.Encoding.CodePages" />
 		<PackageReference Include="YamlDotNet" />

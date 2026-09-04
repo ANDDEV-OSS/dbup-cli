@@ -1,7 +1,8 @@
-﻿using System.Data;
+using System.Data;
+using Azure.Core;
+using Azure.Identity;
 using DbUp.Engine.Output;
 using DbUp.SqlServer;
-using Microsoft.Azure.Services.AppAuthentication;
 using Microsoft.Data.SqlClient;
 
 namespace DbUp.Cli.DbUpCustomization;
@@ -179,10 +180,20 @@ internal static class AzureSqlDatabaseWithIntegratedSecurity
         }
     }
 
-    private static string GetAccessToken(string resource = "https://database.windows.net/", string? tenantId = null, string azureAdInstance = "https://login.microsoftonline.com/") =>
-        new AzureServiceTokenProvider(azureAdInstance: azureAdInstance)
-            .GetAccessTokenAsync(resource, tenantId)
-            .ConfigureAwait(false)
-            .GetAwaiter()
-            .GetResult();
+    private static string GetAccessToken(string resource = "https://database.windows.net/", string? tenantId = null, string azureAdInstance = "https://login.microsoftonline.com/")
+    {
+        var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+        {
+            AuthorityHost = new Uri(azureAdInstance),
+            TenantId = tenantId
+        });
+
+        // AzureServiceTokenProvider took a resource; TokenCredential takes scopes.
+        // The conversion is resource + "/.default", which for the Azure SQL default
+        // above yields "https://database.windows.net//.default" - the doubled slash
+        // is expected and is what Azure SQL documents.
+        var context = new TokenRequestContext(new[] { $"{resource}/.default" });
+
+        return credential.GetToken(context, CancellationToken.None).Token;
+    }
 }
