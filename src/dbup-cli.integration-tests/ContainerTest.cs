@@ -61,7 +61,7 @@ public abstract class ContainerTest<TBuilderEntity, TContainerEntity, TConfigura
     public async ValueTask InitializeAsync()
     {
         dbName = $"DbUp_{TestContext.Current.TestMethod!.MethodName}";
-        dbName.Length.Should().BeLessOrEqualTo(DbNameLengthLimit);
+        dbName.Length.Should().BeLessThanOrEqualTo(DbNameLengthLimit);
         
         container = await GetContainer(() => NewBuilder);
         serverConnString = container.GetConnectionString();

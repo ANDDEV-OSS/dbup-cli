@@ -11,37 +11,37 @@
     <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="CommandDotNet" Version="8.0.0" />
-    <PackageVersion Include="CommandDotNet.DataAnnotations" Version="4.0.0" />
-    <PackageVersion Include="CommandDotNet.NameCasing" Version="5.0.0" />
-    <PackageVersion Include="CommandDotNet.TestTools" Version="7.0.0" />
+    <PackageVersion Include="CommandDotNet" Version="8.1.1" />
+    <PackageVersion Include="CommandDotNet.DataAnnotations" Version="4.1.0" />
+    <PackageVersion Include="CommandDotNet.NameCasing" Version="5.1.0" />
+    <PackageVersion Include="CommandDotNet.TestTools" Version="7.1.0" />
     <PackageVersion Include="dbup-core" Version="6.1.1" />
     <PackageVersion Include="dbup-mysql" Version="6.1.0" />
     <PackageVersion Include="dbup-postgresql" Version="6.1.5" />
     <PackageVersion Include="dbup-sqlserver" Version="6.0.16" />
     <PackageVersion Include="DotNetEnv" Version="3.1.1" />
-    <PackageVersion Include="JetBrains.Annotations" Version="2024.3.0" />
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
     <PackageVersion Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
     <PackageVersion Include="Microsoft.Azure.Services.AppAuthentication" Version="1.6.2" />
     <PackageVersion Include="Npgsql" Version="9.0.4" />
     <!-- Pinned transitively: the deprecated Microsoft.Azure.* packages above
          resolve Newtonsoft.Json 10.0.3, which is CVE-2024-21907. -->
     <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="System.Text.Encoding.CodePages" Version="9.0.0" />
-    <PackageVersion Include="YamlDotNet" Version="16.2.1" />
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="10.0.0" />
+    <PackageVersion Include="YamlDotNet" Version="16.3.0" />
   </ItemGroup>
   <ItemGroup Label="test packages">
     <PackageVersion Include="FakeItEasy" Version="8.3.0" />
-    <PackageVersion Include="FluentAssertions" Version="7.0.0" />
-    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
-    <PackageVersion Include="MySql.Data" Version="9.1.0" />
-    <PackageVersion Include="Testcontainers" Version="4.1.0" />
-    <PackageVersion Include="Testcontainers.MsSql" Version="4.1.0" />
-    <PackageVersion Include="Testcontainers.MySql" Version="4.1.0" />
-    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.1.0" />
+    <PackageVersion Include="FluentAssertions" Version="8.8.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageVersion Include="MySql.Data" Version="9.5.0" />
+    <PackageVersion Include="Testcontainers" Version="4.8.1" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.8.1" />
+    <PackageVersion Include="Testcontainers.MySql" Version="4.8.1" />
+    <PackageVersion Include="Testcontainers.PostgreSql" Version="4.8.1" />
     <PackageVersion Include="Verify.DiffPlex" Version="3.1.2" />
-    <PackageVersion Include="Verify.XunitV3" Version="28.7.0" />
-    <PackageVersion Include="xunit.runner.visualstudio" Version="3.0.0" />
-    <PackageVersion Include="xunit.v3" Version="1.0.0" />
+    <PackageVersion Include="Verify.XunitV3" Version="31.7.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="xunit.v3" Version="3.2.0" />
   </ItemGroup>
 </Project>
