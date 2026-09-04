@@ -8,6 +8,7 @@ using Optional;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.CompilerServices;
 
 namespace DbUp.Cli
 {
@@ -21,27 +22,91 @@ namespace DbUp.Cli
                                           connectionString.IndexOf("Trusted_Connection", StringComparison.InvariantCultureIgnoreCase) >= 0);
         }
 
+        // Each provider's types are reached only through one of these shims.
+        // The CLR resolves assembly references when a method is JIT-compiled,
+        // so as long as the dispatching switch below mentions no provider type
+        // directly, selecting PostgreSQL never loads the SQL Server, MySQL or
+        // CockroachDB assemblies. NoInlining is what keeps that true: inlining
+        // would fold the body back into the caller and load it again.
+        //
+        // Signatures deliberately use only dbup-core types.
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static UpgradeEngineBuilder SqlServerBuilder(string connectionString, TimeSpan timeout) =>
+            DeployChanges.To.SqlDatabase(connectionString).WithExecutionTimeout(timeout);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static UpgradeEngineBuilder AzureSqlBuilder(string connectionString, TimeSpan timeout) =>
+            DeployChanges.To.SqlDatabase(connectionString, null, UseAzureSqlIntegratedSecurity(connectionString))
+                .WithExecutionTimeout(timeout);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static UpgradeEngineBuilder PostgresqlBuilder(string connectionString, TimeSpan timeout) =>
+            DeployChanges.To.PostgresqlDatabase(connectionString).WithExecutionTimeout(timeout);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static UpgradeEngineBuilder MySqlBuilder(string connectionString, TimeSpan timeout) =>
+            DeployChanges.To.MySqlDatabase(connectionString).WithExecutionTimeout(timeout);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static UpgradeEngineBuilder CockroachDbBuilder(string connectionString, TimeSpan timeout) =>
+            DeployChanges.To.CockroachDbDatabase(connectionString).WithExecutionTimeout(timeout);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void EnsureSqlServer(string connectionString, IUpgradeLog logger, int timeoutSec) =>
+            EnsureDatabase.For.SqlDatabase(connectionString, logger, timeoutSec);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void EnsureAzureSql(string connectionString, IUpgradeLog logger, int timeoutSec) =>
+            EnsureDatabase.For.AzureSqlDatabase(connectionString, logger, timeoutSec);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void EnsurePostgresql(string connectionString, IUpgradeLog logger) =>
+            EnsureDatabase.For.PostgresqlDatabase(connectionString, logger); // Postgres provider does not support timeout...
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void EnsureMySql(string connectionString, IUpgradeLog logger, int timeoutSec) =>
+            EnsureDatabase.For.MySqlDatabase(connectionString, logger, timeoutSec);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void EnsureCockroachDb(string connectionString, IUpgradeLog logger) =>
+            EnsureDatabase.For.CockroachDbDatabase(connectionString, logger); // Cockroach provider does not support timeout...
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void DropSqlServer(string connectionString, IUpgradeLog logger, int timeoutSec) =>
+            DropDatabase.For.SqlDatabase(connectionString, logger, timeoutSec);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void DropAzureSql(string connectionString, IUpgradeLog logger) =>
+            DropDatabase.For.AzureSqlDatabase(connectionString, logger);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void JournalToSqlServer(UpgradeEngineBuilder builder, string schema, string table) =>
+            builder.JournalToSqlTable(schema, table);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void JournalToMySql(UpgradeEngineBuilder builder, string schema, string table) =>
+            builder.Configure(c => c.Journal = new MySql.MySqlTableJournal(() => c.ConnectionManager, () => c.Log, schema, table));
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void JournalToPostgresql(UpgradeEngineBuilder builder, string schema, string table) =>
+            builder.JournalToPostgresqlTable(schema, table);
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private static void JournalToCockroachDb(UpgradeEngineBuilder builder, string schema, string table) =>
+            builder.JournalToCockroachDbTable(schema, table);
+
         public static Option<UpgradeEngineBuilder, Error> SelectDbProvider(Provider provider, string connectionString, int connectionTimeoutSec)
         {
             var timeout = TimeSpan.FromSeconds(connectionTimeoutSec);
 
             return provider switch
             {
-                Provider.SqlServer => DeployChanges.To.SqlDatabase(connectionString)
-                                        .WithExecutionTimeout(timeout)
-                                        .Some<UpgradeEngineBuilder, Error>(),
-                Provider.AzureSql => DeployChanges.To.SqlDatabase(connectionString, null, UseAzureSqlIntegratedSecurity(connectionString))
-                                        .WithExecutionTimeout(timeout)
-                                        .Some<UpgradeEngineBuilder, Error>(),
-                Provider.PostgreSQL => DeployChanges.To.PostgresqlDatabase(connectionString)
-                                        .WithExecutionTimeout(timeout)
-                                        .Some<UpgradeEngineBuilder, Error>(),
-                Provider.MySQL => DeployChanges.To.MySqlDatabase(connectionString)
-                                        .WithExecutionTimeout(timeout)
-                                        .Some<UpgradeEngineBuilder, Error>(),
-                Provider.CockroachDB => DeployChanges.To.CockroachDbDatabase(connectionString)
-                                        .WithExecutionTimeout(timeout)
-                                        .Some<UpgradeEngineBuilder, Error>(),
+                Provider.SqlServer => SqlServerBuilder(connectionString, timeout).Some<UpgradeEngineBuilder, Error>(),
+                Provider.AzureSql => AzureSqlBuilder(connectionString, timeout).Some<UpgradeEngineBuilder, Error>(),
+                Provider.PostgreSQL => PostgresqlBuilder(connectionString, timeout).Some<UpgradeEngineBuilder, Error>(),
+                Provider.MySQL => MySqlBuilder(connectionString, timeout).Some<UpgradeEngineBuilder, Error>(),
+                Provider.CockroachDB => CockroachDbBuilder(connectionString, timeout).Some<UpgradeEngineBuilder, Error>(),
                 _ => Option.None<UpgradeEngineBuilder, Error>(Error.Create(Constants.ConsoleMessages.UnsupportedProvider, provider.ToString())),
             };
         }
@@ -53,26 +118,26 @@ namespace DbUp.Cli
                 switch (provider)
                 {
                     case Provider.SqlServer:
-                        EnsureDatabase.For.SqlDatabase(connectionString, logger, connectionTimeoutSec);
+                        EnsureSqlServer(connectionString, logger, connectionTimeoutSec);
                         return true.Some<bool, Error>();
                     case Provider.AzureSql:
                         if (UseAzureSqlIntegratedSecurity(connectionString))
                         {
-                            EnsureDatabase.For.AzureSqlDatabase(connectionString, logger, connectionTimeoutSec);
+                            EnsureAzureSql(connectionString, logger, connectionTimeoutSec);
                         }
                         else
                         {
-                            EnsureDatabase.For.SqlDatabase(connectionString, logger, connectionTimeoutSec);
+                            EnsureSqlServer(connectionString, logger, connectionTimeoutSec);
                         }
                         return true.Some<bool, Error>();
                     case Provider.PostgreSQL:
-                        EnsureDatabase.For.PostgresqlDatabase(connectionString, logger); // Postgres provider does not support timeout...
+                        EnsurePostgresql(connectionString, logger);
                         return true.Some<bool, Error>();
                     case Provider.MySQL:
-                        EnsureDatabase.For.MySqlDatabase(connectionString, logger, connectionTimeoutSec);
+                        EnsureMySql(connectionString, logger, connectionTimeoutSec);
                         return true.Some<bool, Error>();
                     case Provider.CockroachDB:
-                        EnsureDatabase.For.CockroachDbDatabase(connectionString, logger); // Cockroach provider does not support timeout...
+                        EnsureCockroachDb(connectionString, logger);
                         return true.Some<bool, Error>();
                 }
             }
@@ -91,16 +156,16 @@ namespace DbUp.Cli
                 switch (provider)
                 {
                     case Provider.SqlServer:
-                        DropDatabase.For.SqlDatabase(connectionString, logger, connectionTimeoutSec);
+                        DropSqlServer(connectionString, logger, connectionTimeoutSec);
                         return true.Some<bool, Error>();
                     case Provider.AzureSql:
                         if (UseAzureSqlIntegratedSecurity(connectionString))
                         {
-                            DropDatabase.For.AzureSqlDatabase(connectionString, logger);
+                            DropAzureSql(connectionString, logger);
                         }
                         else
                         {
-                            DropDatabase.For.SqlDatabase(connectionString, logger, connectionTimeoutSec);
+                            DropSqlServer(connectionString, logger, connectionTimeoutSec);
                         }
                         return true.Some<bool, Error>();
                     case Provider.PostgreSQL:
@@ -132,16 +197,16 @@ namespace DbUp.Cli
                         switch (provider)
                         {
                             case Provider.SqlServer:
-                                builder.JournalToSqlTable(journal.Schema, journal.Table);
+                                JournalToSqlServer(builder, journal.Schema, journal.Table);
                                 break;
                             case Provider.MySQL:
-                                builder.Configure(c => c.Journal = new MySql.MySqlTableJournal(() => c.ConnectionManager, () => c.Log, journal.Schema, journal.Table));
+                                JournalToMySql(builder, journal.Schema, journal.Table);
                                 break;
                             case Provider.PostgreSQL:
-                                builder.JournalToPostgresqlTable(journal.Schema, journal.Table);
+                                JournalToPostgresql(builder, journal.Schema, journal.Table);
                                 break;
                             case Provider.CockroachDB:
-                                builder.JournalToCockroachDbTable(journal.Schema, journal.Table);
+                                JournalToCockroachDb(builder, journal.Schema, journal.Table);
                                 break;
                             default:
                                 return Option.None<UpgradeEngineBuilder, Error>(Error.Create($"JournalTo does not support a provider {provider}"));
